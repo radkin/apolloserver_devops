@@ -20,6 +20,8 @@ spec:
       labels:
         io.kompose.service: redis-replica
     spec:
+      securityContext:
+        runAsUser: 0
       containers:
       - env:
         - name: ALLOW_EMPTY_PASSWORD

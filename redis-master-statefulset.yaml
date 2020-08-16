@@ -1,0 +1,86 @@
+kind: StatefulSet
+metadata:
+  name: rune-redis-master
+  labels:
+    app: redis
+    chart: redis-3.2.0
+    release: "rune-redis"
+    heritage: "Tiller"
+spec:
+  selector:
+    matchLabels:
+      release: "rune-redis"
+      role: master
+      app: redis
+  serviceName: "redis-master"
+  template:
+    metadata:
+      labels:
+        release: "rune-redis"
+        role: master
+        app: redis
+      annotations:
+        sidecar.istio.io/inject: "false"
+
+    spec:
+      securityContext:
+        fsGroup: 1001
+        runAsUser: 1001
+      containers:
+      - name: rune-redis
+        image: "docker.io/bitnami/redis:4.0.9"
+        imagePullPolicy: "Always"
+        env:
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DISABLE_COMMANDS
+          value:
+        ports:
+        - name: redis
+          containerPort: 6379
+        livenessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+          exec:
+            command:
+            - redis-cli
+            - ping
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 5
+          exec:
+            command:
+            - redis-cli
+            - ping
+        resources:
+          null
+
+        volumeMounts:
+        - name: redis-data
+          mountPath: /bitnami/redis/data
+          subPath:
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+        labels:
+          app: "redis"
+          chart: redis-3.2.0
+          component: "master"
+          release: "rune-redis"
+          heritage: "Tiller"
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "8Gi"
