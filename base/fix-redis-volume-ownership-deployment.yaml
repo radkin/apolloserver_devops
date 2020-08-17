@@ -21,17 +21,49 @@ spec:
       labels:
         io.kompose.service: fix-redis-volume-ownership
     spec:
+      securityContext:
+        runAsUser: 0
       containers:
-      - args:
-        - chown
-        - -R
-        - 1001:1001
-        - /bitnami
-        image: bitnami/redis:latest
-        name: fix-redis-volume-ownership
-        resources: {}
+      - name: fix-redis-volume-ownership
+        image: "docker.io/bitnami/redis:latest"
+        imagePullPolicy: "Always"
+        env:
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DISABLE_COMMANDS
+          value:
+        ports:
+        - name: redis
+          containerPort: 6379
+        livenessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+          exec:
+            command:
+            - redis-cli
+            - ping
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 5
+          exec:
+            command:
+            - redis-cli
+            - ping
+        resources:
+          null
+
         volumeMounts:
-        - mountPath: /bitnami
+        - mountPath: /bitnami/redis/data
           name: fix-redis-volume-ownership-claim0
         - mountPath: /opt/bitnami/redis/conf/redis.conf
           name: fix-redis-volume-ownership-claim1

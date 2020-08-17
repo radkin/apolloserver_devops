@@ -6,11 +6,12 @@ metadata:
     kompose.version: 1.19.0 (f63a961c)
   creationTimestamp: null
   labels:
-    io.kompose.service: apolloserver
-  name: apolloserver
+    io.kompose.service: lb
+  name: lb
 spec:
   replicas: 1
-  strategy: {}
+  strategy:
+    type: Recreate
   template:
     metadata:
       annotations:
@@ -18,13 +19,20 @@ spec:
         kompose.version: 1.19.0 (f63a961c)
       creationTimestamp: null
       labels:
-        io.kompose.service: apolloserver
+        io.kompose.service: lb
     spec:
       containers:
-      - image: radkin/apolloserver:latest
-        name: apolloserver
+      - image: dockercloud/haproxy
+        name: lb
         ports:
-        - containerPort: 9000
+        - containerPort: 80
         resources: {}
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: lb-claim0
       restartPolicy: Always
+      volumes:
+      - name: lb-claim0
+        persistentVolumeClaim:
+          claimName: lb-claim0
 status: {}

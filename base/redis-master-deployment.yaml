@@ -21,6 +21,8 @@ spec:
       labels:
         io.kompose.service: redis-master
     spec:
+      securityContext:
+        runAsUser: 0
       containers:
       - env:
         - name: ALLOW_EMPTY_PASSWORD
@@ -33,7 +35,7 @@ spec:
         - containerPort: 6379
         resources: {}
         volumeMounts:
-        - mountPath: /bitnami
+        - mountPath: /bitnami/redis/data
           name: redis-master-claim0
         - mountPath: /opt/bitnami/redis/conf/redis.conf
           name: redis-master-claim1
