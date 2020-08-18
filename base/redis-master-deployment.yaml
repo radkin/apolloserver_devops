@@ -20,7 +20,28 @@ spec:
       creationTimestamp: null
       labels:
         io.kompose.service: redis-master
+        app: master
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - web-store
+            topologyKey: "kubernetes.io/hostname"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - master
+            topologyKey: "kubernetes.io/hostname"
       securityContext:
         runAsUser: 0
       containers:
