@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
@@ -9,7 +9,12 @@ metadata:
     io.kompose.service: redis-master
   name: redis-master
 spec:
+  progressDeadlineSeconds: 2147483647
   replicas: 1
+  revisionHistoryLimit: 2147483647
+  selector:
+    matchLabels:
+      io.kompose.service: redis-master
   strategy:
     type: Recreate
   template:
@@ -20,30 +25,7 @@ spec:
       creationTimestamp: null
       labels:
         io.kompose.service: redis-master
-        app: master
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - web-store
-            topologyKey: "kubernetes.io/hostname"
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - master
-            topologyKey: "kubernetes.io/hostname"
-      securityContext:
-        runAsUser: 0
       containers:
       - env:
         - name: ALLOW_EMPTY_PASSWORD
@@ -51,16 +33,24 @@ spec:
         - name: REDIS_REPLICATION_MODE
           value: master
         image: bitnami/redis:latest
+        imagePullPolicy: Always
         name: redis-master
         ports:
         - containerPort: 6379
+          protocol: TCP
         resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
         volumeMounts:
-        - mountPath: /bitnami/redis/data
+        - mountPath: /bitnami
           name: redis-master-claim0
         - mountPath: /opt/bitnami/redis/conf/redis.conf
           name: redis-master-claim1
+      dnsPolicy: ClusterFirst
       restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
       volumes:
       - name: redis-master-claim0
         persistentVolumeClaim:

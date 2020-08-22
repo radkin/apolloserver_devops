@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
@@ -9,8 +9,17 @@ metadata:
     io.kompose.service: redis-replica
   name: redis-replica
 spec:
+  progressDeadlineSeconds: 2147483647
   replicas: 1
-  strategy: {}
+  revisionHistoryLimit: 2147483647
+  selector:
+    matchLabels:
+      io.kompose.service: redis-replica
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -19,76 +28,29 @@ spec:
       creationTimestamp: null
       labels:
         io.kompose.service: redis-replica
-        app: store
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: store
-                operator: In
-                values:
-                - store
-            topologyKey: "kubernetes.io/hostname"
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - lb
-            topologyKey: "kubernetes.io/hostname"
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - web-store
-            topologyKey: "kubernetes.io/hostname"
-      securityContext:
-        runAsUser: 0
       containers:
       - env:
-        - name: REDIS_REPLICATION_MODE
-          value: slave
-        - name: REDIS_MASTER_HOST
-          value: redis-master
-        - name: REDIS_PORT
-          value: "6379"
-        - name: REDIS_MASTER_PORT_NUMBER
-          value: "6379"
         - name: ALLOW_EMPTY_PASSWORD
           value: "yes"
-        - name: REDIS_DISABLE_COMMANDS
-          value:
+        - name: REDIS_MASTER_HOST
+          value: redis-master
+        - name: REDIS_MASTER_PORT_NUMBER
+          value: "6379"
+        - name: REDIS_REPLICATION_MODE
+          value: slave
         image: bitnami/redis:latest
+        imagePullPolicy: Always
         name: redis-replica
         ports:
         - containerPort: 6379
-        livenessProbe:
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          successThreshold: 1
-          failureThreshold: 5
-          exec:
-            command:
-            - redis-cli
-            - ping
-        readinessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 1
-          successThreshold: 1
-          failureThreshold: 5
-          exec:
-            command:
-            - redis-cli
-            - ping
+          protocol: TCP
         resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
       restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
 status: {}
