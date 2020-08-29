@@ -9,7 +9,7 @@ spec:
   type: LoadBalancer
   ports:
     # the port that this service should serve on
-  - port: 80
+  - port: 9000
   selector:
     app: apolloserver
     tier: frontend
