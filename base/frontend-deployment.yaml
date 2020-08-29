@@ -6,12 +6,12 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-        app: guestbook
+        app: apolloserver
         tier: frontend
   template:
     metadata:
       labels:
-        app: guestbook
+        app: apolloserver
         tier: frontend
     spec:
       containers:
